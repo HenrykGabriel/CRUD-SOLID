@@ -25,3 +25,18 @@ jobs:
 
       - name: Compilar projeto
         run: dotnet build --configuration Release --no-restore
+
+      - name: Publicar aplicação
+        run: dotnet publish --configuration Release --no-restore --output ./publish
+
+      - name: Gerar artefato ZIP
+        run: |
+          cd publish
+          zip -r ../projeto-csharp.zip .
+
+      - name: Disponibilizar artefato para download
+        uses: actions/upload-artifact@v4
+        with:
+          name: projeto-csharp
+          path: projeto-csharp.zip
+          retention-days: 30
