@@ -8,11 +8,17 @@ namespace Projeto_SOLID.Model
 {
     internal class Compra
     {
+        public int Id {  get; private set; }
+        public DateTime Data { get; private set; }
         private readonly List<Item> Itens;
+        public decimal Total { get; private set; }
 
-        public Compra()
+        public Compra(int id)
         {
             Itens = new List<Item>();
+            Id = id;
+            Data = DateTime.Now;
+            Total = 0;
         }
 
         public void Adicionar(Item item)
@@ -56,7 +62,14 @@ namespace Projeto_SOLID.Model
                 total += item.Subtotal;
             }
 
+            this.Total = total;
+
             return total;
+        }
+
+        public void AtualizarId(int id)
+        {
+            this.Id = id;
         }
     }
 }

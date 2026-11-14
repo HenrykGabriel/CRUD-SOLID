@@ -16,6 +16,7 @@ namespace Projeto_SOLID.View
             Console.WriteLine();
             Console.WriteLine("1 - Comprar");
             Console.WriteLine("2 - Gerenciar produtos");
+            Console.WriteLine("3 - Consultar compras");
             Console.WriteLine("0 - Sair");
             Console.WriteLine();
             Console.Write("Escolha uma opção: ");

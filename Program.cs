@@ -12,6 +12,7 @@ namespace ProjetoSOLID
         static void Main(string[] args)
         {
             IRepository<Produto> repository = new ListaProdutos();
+            ICompraRepository<Compra> compraRepository = new ListaCompras();
 
             bool prodBases = false;
 
@@ -24,11 +25,14 @@ namespace ProjetoSOLID
                 switch(opcao)
                 {
                     case 1:
-                        MenuCompra(repository);
+                        MenuCompra(repository, compraRepository);
                         break;
 
                     case 2:
                         MenuProdutos(repository, prodBases);
+                        break;
+                    case 3:
+                        MenuConsulta(compraRepository);
                         break;
                     default:
                         Console.WriteLine("Opção inválida!");
@@ -171,16 +175,17 @@ namespace ProjetoSOLID
             return opcao;
         }
 
-        public static void MenuCompra(IRepository<Produto> repository)
+        public static void MenuCompra(IRepository<Produto> repository, ICompraRepository<Compra> compraRepository)
         {
             IProdutoView produtoView = new ProdutoView();
             IMenuView menuView = new MenuCompraView();
-            Compra compra = new Compra();
             IItemView itemView = new ItemView();
 
-            CompraController controller = new CompraController(repository, produtoView, itemView, compra);
+            CompraController controller = new CompraController(repository, compraRepository, produtoView, itemView);
 
             int opcao;
+
+            bool compraFinalizada = false;
 
             do
             {
@@ -201,14 +206,10 @@ namespace ProjetoSOLID
                             controller.ListarProdutos();
 
                             Console.Write("\nEscolha o id do produto: ");
-                            int id = int.Parse(Console.ReadLine());
 
-                            if(id > tam_lista)
+                            if(int.TryParse(Console.ReadLine(), out int id))
                             {
-                                Console.WriteLine("\nProduto não encontrado");
-                            }
-                            else
-                            {
+                            
                                 Console.Write("\nQual a quantidade do produto: ");
                                 int quant = int.Parse(Console.ReadLine());
 
@@ -220,11 +221,15 @@ namespace ProjetoSOLID
 
                                 Console.WriteLine("\nItem adicionando");
                             }
+                            else
+                            {
+                                Console.WriteLine("\nProduto não encontrado");
+                            }
                         }
                         break;
 
                     case 2:
-                        tam_lista = compra.ListarTodos().Count();
+                        tam_lista = controller.ListaItens().Count;
 
                         if(tam_lista > 0)
                         {
@@ -238,24 +243,23 @@ namespace ProjetoSOLID
                         break;
 
                     case 3:
-                        tam_lista = compra.ListarTodos().Count();
+                        tam_lista = controller.ListaItens().Count;
 
                         if (tam_lista > 0)
                         {
                             controller.ListarItens();
 
                             Console.Write("\nQual o id do item: ");
-                            int id = int.Parse(Console.ReadLine());
 
-                            if (id > tam_lista)
-                            {
-                                Console.WriteLine("\n\nItem não encontrado");
-                            }
-                            else
+                            if (int.TryParse(Console.ReadLine(), out int id))
                             {
                                 controller.Remover(id);
 
                                 Console.WriteLine("\n\nItem removido");
+                            }
+                            else
+                            {
+                                Console.WriteLine("\n\nItem não encontrado");
                             }
                         }
                         else
@@ -278,7 +282,7 @@ namespace ProjetoSOLID
                             break;
 
                     case 5:
-                        tam_lista = compra.ListarTodos().Count();
+                        tam_lista = controller.ListaItens().Count;
 
                         if (tam_lista == 0)
                         {
@@ -291,6 +295,10 @@ namespace ProjetoSOLID
                             decimal total = controller.CalcularTotal();
 
                             Console.WriteLine($"\nO total da compra foi: {total:C2}");
+
+                            controller.SalvarCompra();
+
+                            compraFinalizada = true;
 
                             Console.WriteLine("\nAperte enter para sair...");
                             Console.ReadKey();
@@ -306,10 +314,108 @@ namespace ProjetoSOLID
                         break;
                 }
 
-                if (opcao != 0 && opcao != 5)
+                if (opcao != 0)
                 {
                     Console.WriteLine();
                     Console.WriteLine("Pressione qualquer tecla para continuar...");
+                    Console.ReadKey();
+                }
+
+            } while (opcao != 0 && compraFinalizada == false);
+        }
+
+        public static void MenuConsulta(ICompraRepository<Compra> compraRepository)
+        {
+            IMenuView menuConsulta = new MenuConsultarView(); 
+            ICompraView compraView = new CompraView();
+            IItemView itemView = new ItemView();
+
+            int opcao;
+
+            do
+            {
+                opcao = menuConsulta.ExibirMenu();
+
+                Console.Clear();
+                switch (opcao)
+                {
+                    case 1:
+                        List<Compra> compras = compraRepository.ListarTodos();
+
+                        if (compras.Count == 0)
+                        {
+                            Console.WriteLine("Nenhuma compra foi feita ainda");
+                        }
+                        else
+                        {
+
+                            Console.WriteLine("=======| Lista de compras |=======\n");
+
+                            foreach (Compra c in compras)
+                            {
+                                compraView.MostrarCompra(c);
+                            }
+                        }
+
+                        break;
+
+                    case 2:
+                        compras = compraRepository.ListarTodos();
+
+                        if (compras.Count == 0)
+                        {
+                            Console.WriteLine("Nenhuma compra foi feita ainda");
+                        }
+                        else
+                        {
+
+                            Console.WriteLine("=======| Lista de compras |=======\n");
+
+                            foreach (Compra c in compras)
+                            {
+                                compraView.MostrarCompra(c);
+                            }
+
+                            Console.Write("\nEscolha o id da compra que deseja ver: ");
+
+                            if (int.TryParse(Console.ReadLine(), out int id))
+                            {
+                                Console.Clear();
+
+                                Compra compra = compraRepository.BuscarPorId(id);
+
+                                Console.WriteLine($"=====| COMPRA {compra.Id} |=====\n");
+
+                                Console.WriteLine($"Id: {compra.Id}\n");
+                                Console.WriteLine($"Total: {compra.Total}\n");
+                                Console.WriteLine($"Data: {compra.Data}\n");
+                                Console.WriteLine("Itens:");
+                                foreach(Item i in compra.ListarTodos())
+                                {
+                                    itemView.MostrarItem(i);
+                                }
+                            }
+                            else
+                            {
+                                Console.WriteLine("\n\nCompra não encontrada");
+                            }
+
+
+                        }
+                        break;
+                    case 3:
+                        MenuConsulta(compraRepository);
+                        break;
+                    default:
+                        Console.WriteLine("Opção inválida!");
+                        break;
+
+                }
+
+                if (opcao != 0)
+                {
+                    Console.WriteLine();
+                    Console.WriteLine("\nPressione qualquer tecla para continuar...");
                     Console.ReadKey();
                 }
 

@@ -29,17 +29,23 @@ namespace Projeto_SOLID.Controller
 
             List<Produto> produtos = repository.ListarTodos();
          
-            int id;
+            int id = 0;
 
-            int tam_lista = produtos.Count;
-
-            if(tam_lista == 0)
+            if (produtos.Count == 0)
             {
                 id = 1;
             }
             else
             {
-                id = tam_lista + 1;
+                foreach (Produto prod in produtos)
+                {
+                    if (id < prod.Id)
+                    {
+                        id = prod.Id;
+                    }
+                }
+
+                id += 1;
             }
 
             produto.Atualizar_id(id);
@@ -90,22 +96,40 @@ namespace Projeto_SOLID.Controller
         {
             List<Produto> produtos = repository.ListarTodos();
 
-            int id;
+            int id = 0;
 
-            int tam_lista = produtos.Count;
-
-            if (tam_lista == 0)
+            if (produtos.Count == 0)
             {
                 id = 1;
             }
             else
             {
-                id = tam_lista + 1;
+                foreach (Produto prod in produtos)
+                {
+                    if (id < prod.Id)
+                    {
+                        id = prod.Id;
+                    }
+                }
+
+                id += 1;
             }
 
             p.Atualizar_id(id);
 
             repository.Adicionar(p);
+        }
+
+        public bool ProcurarProduto(int id)
+        {
+            foreach (Produto produto in repository.ListarTodos())
+            {
+                if (produto.Id == id)
+                {
+                    return true;
+                }
+            }
+            return false;
         }
     }
 }

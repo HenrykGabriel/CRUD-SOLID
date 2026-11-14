@@ -12,35 +12,42 @@ namespace Projeto_SOLID.Controller
     internal class CompraController
     {
         private readonly IRepository<Produto> repository;
+        private readonly ICompraRepository<Compra> compraRepository;
         private readonly IProdutoView prodView;
         private readonly IItemView itemView;
-        private readonly Compra compra;
+        private readonly Compra compra = new Compra(1);
 
-        public CompraController(IRepository<Produto> repository,
-            IProdutoView prodView, IItemView itemView,Compra compra)
+        public CompraController(IRepository<Produto> repository, ICompraRepository<Compra> compraRepository,
+            IProdutoView prodView, IItemView itemView)
         {
             this.prodView = prodView;
             this.repository = repository;
             this.itemView = itemView;
-            this.compra = compra;
+            this.compraRepository = compraRepository;
         }
 
         public void AdicionarItem(Item item)
         {
             List<Item> itens = compra.ListarTodos();
 
-            int id;
+            int id = 0;
 
-            int tam_lista = itens.Count;
-
-            if (tam_lista == 0)
+            if (itens.Count == 0)
             {
                 id = 1;
             }
             else
             {
-                id = tam_lista + 1;
+                foreach (Item i in itens)
+                {
+                    if (id < i.Id)
+                    {
+                        id = i.Id;
+                    }
+                }
             }
+
+            id += 1;
 
             item.AtualizarId(id);
 
@@ -71,6 +78,11 @@ namespace Projeto_SOLID.Controller
             }
         }
 
+        public List<Item> ListaItens()
+        {
+            return compra.ListarTodos();
+        }
+
         public void Remover(Item i)
         {
             compra.Remover(i);
@@ -84,6 +96,14 @@ namespace Projeto_SOLID.Controller
         public decimal CalcularTotal()
         {
             return compra.CalcularTotal();
+        }
+
+        public void SalvarCompra()
+        {
+            if(compra.ListarTodos().Count > 0)
+            {
+                compraRepository.Adicionar(compra);
+            }
         }
     }
 }
